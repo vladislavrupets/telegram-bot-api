@@ -40,7 +40,8 @@ WORKDIR /app/telegram-bot-api/bin
 
 # Create a shell script to run telegram-bot-api with environment variables
 RUN echo '#!/bin/sh\n\
-exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" "$@"' > entrypoint.sh && \
+export PORT=${PORT:-8081}\n\
+exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --http-port=8081 "$@"' > entrypoint.sh && \
     chmod +x entrypoint.sh
 
 # Expose port 8081
