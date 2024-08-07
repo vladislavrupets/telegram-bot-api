@@ -16,6 +16,7 @@ RUN apt-get update && apt-get upgrade -y && \
     clang-14 \
     libc++-14-dev \
     libc++abi-14-dev \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -35,14 +36,27 @@ RUN cd telegram-bot-api && \
     cd ../.. && \
     ls -l telegram-bot-api/bin/telegram-bot-api*
 
-# Set the working directory to where the binary is located
-WORKDIR /app/telegram-bot-api/bin
+# Set up Nginx configuration
+RUN echo "events { worker_connections 1024; } \n\
+http { \n\
+    server { \n\
+        listen 80; \n\
+        server_name \$RAILWAY_PRIVATE_DOMAIN; \n\
+        location / { \n\
+            proxy_pass http://localhost:8081; \n\
+            proxy_set_header Host \$host; \n\
+            proxy_set_header X-Real-IP \$remote_addr; \n\
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; \n\
+            proxy_set_header X-Forwarded-Proto \$scheme; \n\
+        } \n\
+    } \n\
+}" > /etc/nginx/nginx.conf
 
-# Create a shell script to run telegram-bot-api with environment variables
+# Create a shell script to run both telegram-bot-api and Nginx
 RUN echo '#!/bin/sh\n\
-exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$HASH" "$@"' > entrypoint.sh && \
-    chmod +x entrypoint.sh
+nginx &\n\
+/app/telegram-bot-api/bin/telegram-bot-api --api-id="$APP_ID" --api-hash="$HASH" --local --http-port=8081 --dir=/var/lib/telegram-bot-api --temp-dir=/tmp/telegram-bot-api --log=/var/log/telegram-bot-api.log "$@"' > /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
-# Use ENTRYPOINT with the shell script and CMD for additional arguments
-ENTRYPOINT ["/app/telegram-bot-api/bin/entrypoint.sh"]
-CMD []
+# Use ENTRYPOINT with the shell script
+ENTRYPOINT ["/app/entrypoint.sh"]
