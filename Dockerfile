@@ -8,6 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
     make \
+    git \
     zlib1g-dev \
     libssl-dev \
     gperf \
@@ -20,19 +21,18 @@ RUN apt-get update && apt-get upgrade -y && \
 # Set working directory
 WORKDIR /app
 
-# Copy the local telegram-bot-api files
-COPY . .
-
-# Build telegram-bot-api
-RUN mkdir build && \
+# Clone and build telegram-bot-api
+RUN git clone https://github.com/tdlib/td.git && \
+    cd telegram-bot-api && \
+    mkdir build && \
     cd build && \
     CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. .. && \
     cmake --build . --target install && \
-    cd .. && \
-    ls -l bin/telegram-bot-api*
+    cd ../.. && \
+    ls -l telegram-bot-api/bin/telegram-bot-api*
 
 # Set the working directory to where the binary is located
-WORKDIR /app/bin
+WORKDIR /app/telegram-bot-api/bin
 
 # Create a shell script to run telegram-bot-api with environment variables
 RUN echo '#!/bin/sh\n\
@@ -40,5 +40,5 @@ exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$HASH" "$@"' > entrypoint
     chmod +x entrypoint.sh
 
 # Use ENTRYPOINT with the shell script and CMD for additional arguments
-ENTRYPOINT ["/app/bin/entrypoint.sh"]
+ENTRYPOINT ["/app/telegram-bot-api/bin/entrypoint.sh"]
 CMD []
