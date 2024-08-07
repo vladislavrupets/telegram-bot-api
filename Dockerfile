@@ -21,9 +21,13 @@ RUN apt-get update && apt-get upgrade -y && \
 # Set working directory
 WORKDIR /app
 
-# Clone and build telegram-bot-api
-RUN git clone https://github.com/tdlib/td.git && \
+# Clone the main repository and initialize submodules
+RUN git clone https://github.com/tdlib/telegram-bot-api.git && \
     cd telegram-bot-api && \
+    git submodule update --init --recursive
+
+# Build telegram-bot-api
+RUN cd telegram-bot-api && \
     mkdir build && \
     cd build && \
     CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. .. && \
