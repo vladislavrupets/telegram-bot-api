@@ -43,6 +43,9 @@ RUN echo '#!/bin/sh\n\
 exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" "$@"' > entrypoint.sh && \
     chmod +x entrypoint.sh
 
+# Expose port 8081
+EXPOSE 8081
+
 # Use ENTRYPOINT with the shell script and CMD for additional arguments
 ENTRYPOINT ["/app/telegram-bot-api/bin/entrypoint.sh"]
 CMD []
