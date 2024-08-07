@@ -1,8 +1,12 @@
 # Use Ubuntu as the base image
-FROM ubuntu:22.04
+FROM ubuntu:22.04 as builder
 
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Use ARG for Railway environment variables
+ARG RAILWAY_ENVIRONMENT
+ARG PORT
 
 # Install dependencies
 RUN apt-get update && apt-get upgrade -y && \
@@ -31,22 +35,23 @@ RUN cd telegram-bot-api && \
     mkdir build && \
     cd build && \
     CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang-14 CXX=/usr/bin/clang++-14 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. .. && \
-    cmake --build . --target install && \
-    cd ../.. && \
-    ls -l telegram-bot-api/bin/telegram-bot-api*
+    cmake --build . --target install
 
-# Set the working directory to where the binary is located
-WORKDIR /app/telegram-bot-api/bin
+# Start a new stage for the final image
+FROM ubuntu:22.04
+
+# Copy the built binary from the builder stage
+COPY --from=builder /app/telegram-bot-api/bin/telegram-bot-api /app/telegram-bot-api
+
+# Set the working directory
+WORKDIR /app
 
 # Create a shell script to run telegram-bot-api with environment variables
 RUN echo '#!/bin/sh\n\
-export PORT=${PORT:-8081}\n\
-exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --http-port=8081 "$@"' > entrypoint.sh && \
+PORT=${PORT:-8081}\n\
+exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --http-port="$PORT" "$@"' > entrypoint.sh && \
     chmod +x entrypoint.sh
 
-# Expose port 8081
-EXPOSE 8081
-
 # Use ENTRYPOINT with the shell script and CMD for additional arguments
-ENTRYPOINT ["/app/telegram-bot-api/bin/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD []
