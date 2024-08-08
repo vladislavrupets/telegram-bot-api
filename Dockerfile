@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
+# Install dependencies including Node.js and npm
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
     make \
@@ -16,6 +16,9 @@ RUN apt-get update && apt-get upgrade -y && \
     clang-14 \
     libc++-14-dev \
     libc++abi-14-dev \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -35,14 +38,18 @@ RUN cd telegram-bot-api && \
     cd ../.. && \
     ls -l telegram-bot-api/bin/telegram-bot-api*
 
-# Set the working directory to where the binary is located
-WORKDIR /app/telegram-bot-api/bin
+# Copy file-proxy-service files
+COPY proxy-server /app/proxy-server
 
-# Create a shell script to run telegram-bot-api with environment variables
+# Install dependencies for file-proxy-service
+RUN cd /app/proxy-server && npm install
+
+# Create a shell script to run both services
 RUN echo '#!/bin/sh\n\
-exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --local "$@"' > entrypoint.sh && \
-    chmod +x entrypoint.sh
+/app/telegram-bot-api/bin/telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --http-port=${TELEGRAM_API_PORT} --local --http-stat-ip-address=0.0.0.0 "$@" &\n\
+cd /app/proxy-server && PROXY_SERVER_HOST=$HOST PROXY_SERVER_PORT=$PROXY_SERVER_PORT npm start\n' > /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
-# Use ENTRYPOINT with the shell script and CMD for additional arguments
-ENTRYPOINT ["/app/telegram-bot-api/bin/entrypoint.sh"]
+# Set the entrypoint to our shell script
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD []
