@@ -5,7 +5,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const proxyServer = {
   host: process.env.HOST,
-  port: process.env.PROXY_SERVER_PORT,
+  port: process.env.PORT,
 };
 
 const telegramApi = {
