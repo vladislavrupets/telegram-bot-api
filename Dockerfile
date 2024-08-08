@@ -40,7 +40,7 @@ WORKDIR /app/telegram-bot-api/bin
 
 # Create a shell script to run telegram-bot-api with environment variables
 RUN echo '#!/bin/sh\n\
-exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --http-ip-address="0.0.0.0" --http-port="$PORT"  "$@"' > entrypoint.sh && \
+exec ./telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --local --http-port="$PORT" --dir="$FILES_DIR"  "$@"' > entrypoint.sh && \
     chmod +x entrypoint.sh
 
 # Use ENTRYPOINT with the shell script and CMD for additional arguments
