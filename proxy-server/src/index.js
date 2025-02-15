@@ -1,11 +1,11 @@
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const { proxyServer, telegramApi } = require("./config/config");
-const fileProxyRoutes = require("./routes/fileProxyRoutes");
+const fileProxyRoutes = require("./routes/filesProxyRoutes");
 
 const app = express();
 
-app.use("/file-proxy", fileProxyRoutes);
+app.use("/files-proxy", fileProxyRoutes);
 
 app.use(
   "/telegram-api",

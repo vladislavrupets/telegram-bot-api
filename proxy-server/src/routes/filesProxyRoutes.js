@@ -5,7 +5,7 @@ const path = require("path");
 const router = express.Router();
 
 router.get("/get-file/*", (req, res) => {
-  const filePath = path.resolve(req.params[0]);
+  const filePath = path.join("/", req.params[0]);
 
   const allowedDirectory = "/app";
   if (!filePath.startsWith(allowedDirectory)) {
