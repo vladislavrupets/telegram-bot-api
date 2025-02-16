@@ -17,7 +17,7 @@ RUN apt-get update && apt-get upgrade -y && \
     libc++-14-dev \
     libc++abi-14-dev \
     curl \
-    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
