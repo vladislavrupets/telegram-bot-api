@@ -44,11 +44,8 @@ COPY proxy-server /app/proxy-server
 # Install dependencies for file-proxy-service
 RUN cd /app/proxy-server && npm install
 
-# Create a shell script to run both services
-RUN echo '#!/bin/sh\n\
-/app/telegram-bot-api/bin/telegram-bot-api --api-id="$APP_ID" --api-hash="$APP_HASH" --http-port=${TELEGRAM_API_PORT} --local --http-stat-ip-address=0.0.0.0 "$@" &\n\
-cd /app/proxy-server && PROXY_SERVER_HOST=$HOST PROXY_SERVER_PORT=$PORT npm start\n' > /app/entrypoint.sh && \
-    chmod +x /app/entrypoint.sh
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Set the entrypoint to our shell script
 ENTRYPOINT ["/app/entrypoint.sh"]
